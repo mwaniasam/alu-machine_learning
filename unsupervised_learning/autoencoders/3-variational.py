@@ -88,6 +88,6 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
         keras.backend.mean(reconstruction_loss + kl_loss)
     )
 
-    auto.compile(optimizer='adam')
+    auto.compile(optimizer='adam', loss='binary_crossentropy')
 
     return encoder, decoder, auto
