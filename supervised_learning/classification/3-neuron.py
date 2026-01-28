@@ -55,10 +55,10 @@ class Neuron:
         """
         # Calculate linear combination: z = W·X + b
         z = np.matmul(self.__W, X) + self.__b
-        
+
         # Apply sigmoid activation function: A = 1 / (1 + e^(-z))
         self.__A = 1 / (1 + np.exp(-z))
-        
+
         return self.__A
 
     def cost(self, Y, A):
@@ -74,12 +74,12 @@ class Neuron:
         """
         # Number of examples
         m = Y.shape[1]
-        
+
         # Logistic regression cost function
         # Cost = -1/m * Σ[Y*log(A) + (1-Y)*log(1-A)]
         # Using 1.0000001 - A instead of 1 - A to avoid division by zero
         cost = -1 / m * np.sum(
             Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A)
         )
-        
+
         return cost

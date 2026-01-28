@@ -25,21 +25,21 @@ class DeepNeuralNetwork:
             raise TypeError("nx must be an integer")
         if nx < 1:
             raise ValueError("nx must be a positive integer")
-        
+
         # Validate layers
         if not isinstance(layers, list) or len(layers) == 0:
             raise TypeError("layers must be a list of positive integers")
-        
+
         # Validate all elements in layers are positive integers
         for layer_size in layers:
             if not isinstance(layer_size, int) or layer_size <= 0:
                 raise TypeError("layers must be a list of positive integers")
-        
+
         # Set private attributes
         self.__L = len(layers)
         self.__cache = {}
         self.__weights = {}
-        
+
         # Initialize weights and biases for each layer
         layer_sizes = [nx] + layers
         for l in range(1, self.__L + 1):
@@ -80,23 +80,23 @@ class DeepNeuralNetwork:
         """
         # Store input in cache as A0
         self.__cache['A0'] = X
-        
+
         # Forward propagation through all layers
         A = X
         for l in range(1, self.__L + 1):
             # Get weights and bias for current layer
             W = self.__weights['W' + str(l)]
             b = self.__weights['b' + str(l)]
-            
+
             # Calculate linear combination: Z = W * A_prev + b
             Z = np.matmul(W, A) + b
-            
+
             # Apply sigmoid activation: A = 1 / (1 + e^(-Z))
             A = 1 / (1 + np.exp(-Z))
-            
+
             # Store activated output in cache
             self.__cache['A' + str(l)] = A
-        
+
         # Return final output and cache
         return A, self.__cache
 
@@ -113,14 +113,14 @@ class DeepNeuralNetwork:
         """
         # Number of examples
         m = Y.shape[1]
-        
+
         # Logistic regression cost function
         # Cost = -1/m * Σ[Y*log(A) + (1-Y)*log(1-A)]
         # Using 1.0000001 - A instead of 1 - A to avoid division by zero
         cost = -1 / m * np.sum(
             Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A)
         )
-        
+
         return cost
 
     def evaluate(self, X, Y):
@@ -138,11 +138,11 @@ class DeepNeuralNetwork:
         """
         # Get the activated output using forward propagation
         A, _ = self.forward_prop(X)
-        
+
         # Convert activations to predictions (1 if >= 0.5, 0 otherwise)
         prediction = np.where(A >= 0.5, 1, 0)
-        
+
         # Calculate the cost
         cost = self.cost(Y, A)
-        
+
         return prediction, cost

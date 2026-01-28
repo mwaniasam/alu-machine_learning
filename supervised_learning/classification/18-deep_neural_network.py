@@ -25,21 +25,21 @@ class DeepNeuralNetwork:
             raise TypeError("nx must be an integer")
         if nx < 1:
             raise ValueError("nx must be a positive integer")
-        
+
         # Validate layers
         if not isinstance(layers, list) or len(layers) == 0:
             raise TypeError("layers must be a list of positive integers")
-        
+
         # Validate all elements in layers are positive integers
         for layer_size in layers:
             if not isinstance(layer_size, int) or layer_size <= 0:
                 raise TypeError("layers must be a list of positive integers")
-        
+
         # Set private attributes
         self.__L = len(layers)
         self.__cache = {}
         self.__weights = {}
-        
+
         # Initialize weights and biases for each layer
         layer_sizes = [nx] + layers
         for l in range(1, self.__L + 1):
@@ -80,22 +80,22 @@ class DeepNeuralNetwork:
         """
         # Store input in cache as A0
         self.__cache['A0'] = X
-        
+
         # Forward propagation through all layers
         A = X
         for l in range(1, self.__L + 1):
             # Get weights and bias for current layer
             W = self.__weights['W' + str(l)]
             b = self.__weights['b' + str(l)]
-            
+
             # Calculate linear combination: Z = W * A_prev + b
             Z = np.matmul(W, A) + b
-            
+
             # Apply sigmoid activation: A = 1 / (1 + e^(-Z))
             A = 1 / (1 + np.exp(-Z))
-            
+
             # Store activated output in cache
             self.__cache['A' + str(l)] = A
-        
+
         # Return final output and cache
         return A, self.__cache

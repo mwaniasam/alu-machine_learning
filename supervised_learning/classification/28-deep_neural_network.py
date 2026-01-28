@@ -30,26 +30,26 @@ class DeepNeuralNetwork:
             raise TypeError("nx must be an integer")
         if nx < 1:
             raise ValueError("nx must be a positive integer")
-        
+
         # Validate layers
         if not isinstance(layers, list) or len(layers) == 0:
             raise TypeError("layers must be a list of positive integers")
-        
+
         # Validate all elements in layers are positive integers
         for layer_size in layers:
             if not isinstance(layer_size, int) or layer_size <= 0:
                 raise TypeError("layers must be a list of positive integers")
-        
+
         # Validate activation
         if activation not in ['sig', 'tanh']:
             raise ValueError("activation must be 'sig' or 'tanh'")
-        
+
         # Set private attributes
         self.__L = len(layers)
         self.__cache = {}
         self.__weights = {}
         self.__activation = activation
-        
+
         # Initialize weights and biases for each layer
         layer_sizes = [nx] + layers
         for l in range(1, self.__L + 1):
@@ -95,18 +95,19 @@ class DeepNeuralNetwork:
         """
         # Store input in cache as A0
         self.__cache['A0'] = X
-        
+
         # Forward propagation through all layers
         A = X
         for l in range(1, self.__L + 1):
             # Get weights and bias for current layer
             W = self.__weights['W' + str(l)]
             b = self.__weights['b' + str(l)]
-            
+
             # Calculate linear combination: Z = W * A_prev + b
             Z = np.matmul(W, A) + b
-            
-            # For output layer, use softmax; for hidden layers, use specified activation
+
+            # For output layer, use softmax;
+            # for hidden layers, use specified activation
             if l == self.__L:
                 # Softmax activation for output layer
                 # Subtract max for numerical stability
@@ -120,10 +121,10 @@ class DeepNeuralNetwork:
                 elif self.__activation == 'tanh':
                     # Tanh activation
                     A = np.tanh(Z)
-            
+
             # Store activated output in cache
             self.__cache['A' + str(l)] = A
-        
+
         # Return final output and cache
         return A, self.__cache
 
@@ -132,21 +133,22 @@ class DeepNeuralNetwork:
         Calculates the cost of the model using cross-entropy
 
         Args:
-            Y: numpy.ndarray with shape (classes, m) containing correct labels
-               (one-hot encoded)
-            A: numpy.ndarray with shape (classes, m) containing activated output
+            Y: numpy.ndarray with shape (classes, m) containing correct
+               labels (one-hot encoded)
+            A: numpy.ndarray with shape (classes, m) containing
+               activated output
 
         Returns:
             The cost
         """
         # Number of examples
         m = Y.shape[1]
-        
+
         # Cross-entropy cost function for multiclass classification
         # Cost = -1/m * Σ Σ Y_ij * log(A_ij)
         # Add small epsilon to avoid log(0)
         cost = -1 / m * np.sum(Y * np.log(A))
-        
+
         return cost
 
     def evaluate(self, X, Y):
@@ -165,18 +167,18 @@ class DeepNeuralNetwork:
         """
         # Get the activated output using forward propagation
         A, _ = self.forward_prop(X)
-        
+
         # Convert activations to one-hot predictions
         # Find the index of the maximum value for each example
         max_indices = np.argmax(A, axis=0)
-        
+
         # Create one-hot encoded prediction
         prediction = np.zeros_like(A)
         prediction[max_indices, np.arange(A.shape[1])] = 1
-        
+
         # Calculate the cost
         cost = self.cost(Y, A)
-        
+
         return prediction, cost
 
     def gradient_descent(self, Y, cache, alpha=0.05):
@@ -193,29 +195,29 @@ class DeepNeuralNetwork:
         """
         # Number of examples
         m = Y.shape[1]
-        
+
         # Start backpropagation from the output layer
         # dZ for output layer with softmax: dZ_L = A_L - Y
         dZ = cache['A' + str(self.__L)] - Y
-        
+
         # Backpropagate through all layers
         for l in range(self.__L, 0, -1):
             # Get activation from previous layer
             A_prev = cache['A' + str(l - 1)]
-            
+
             # Calculate gradients
             dW = (1 / m) * np.matmul(dZ, A_prev.T)
             db = (1 / m) * np.sum(dZ, axis=1, keepdims=True)
-            
+
             # Update weights and biases
             self.__weights['W' + str(l)] -= alpha * dW
             self.__weights['b' + str(l)] -= alpha * db
-            
+
             # Calculate dZ for previous layer (if not the input layer)
             if l > 1:
                 W = self.__weights['W' + str(l)]
                 A_prev = cache['A' + str(l - 1)]
-                
+
                 # Use appropriate derivative based on activation function
                 if self.__activation == 'sig':
                     # Sigmoid derivative: A * (1 - A)
@@ -257,44 +259,44 @@ class DeepNeuralNetwork:
             raise TypeError("iterations must be an integer")
         if iterations <= 0:
             raise ValueError("iterations must be a positive integer")
-        
+
         # Validate alpha
         if not isinstance(alpha, float):
             raise TypeError("alpha must be a float")
         if alpha <= 0:
             raise ValueError("alpha must be positive")
-        
+
         # Validate step only if verbose or graph is True
         if verbose or graph:
             if not isinstance(step, int):
                 raise TypeError("step must be an integer")
             if step <= 0 or step > iterations:
                 raise ValueError("step must be positive and <= iterations")
-        
+
         # Lists to store costs and iterations for plotting
         costs = []
         iteration_list = []
-        
+
         # Training loop
         for i in range(iterations + 1):
             # Forward propagation
             A, cache = self.forward_prop(X)
-            
+
             # Print and/or record cost at step intervals and at 0 and last
             if i == 0 or i == iterations or i % step == 0:
                 cost = self.cost(Y, A)
-                
+
                 if verbose:
                     print("Cost after {} iterations: {}".format(i, cost))
-                
+
                 if graph:
                     costs.append(cost)
                     iteration_list.append(i)
-            
+
             # Perform gradient descent (except after last iteration)
             if i < iterations:
                 self.gradient_descent(Y, cache, alpha)
-        
+
         # Plot the graph if requested
         if graph:
             plt.plot(iteration_list, costs, 'b-')
@@ -302,7 +304,7 @@ class DeepNeuralNetwork:
             plt.ylabel('cost')
             plt.title('Training Cost')
             plt.show()
-        
+
         # Return evaluation after training
         return self.evaluate(X, Y)
 
@@ -317,7 +319,7 @@ class DeepNeuralNetwork:
         # Add .pkl extension if not present
         if not filename.endswith('.pkl'):
             filename = filename + '.pkl'
-        
+
         # Save the object using pickle
         with open(filename, 'wb') as f:
             pickle.dump(self, f)

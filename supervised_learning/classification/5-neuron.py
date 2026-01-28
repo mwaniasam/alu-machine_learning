@@ -55,10 +55,10 @@ class Neuron:
         """
         # Calculate linear combination: z = W·X + b
         z = np.matmul(self.__W, X) + self.__b
-        
+
         # Apply sigmoid activation function: A = 1 / (1 + e^(-z))
         self.__A = 1 / (1 + np.exp(-z))
-        
+
         return self.__A
 
     def cost(self, Y, A):
@@ -74,14 +74,14 @@ class Neuron:
         """
         # Number of examples
         m = Y.shape[1]
-        
+
         # Logistic regression cost function
         # Cost = -1/m * Σ[Y*log(A) + (1-Y)*log(1-A)]
         # Using 1.0000001 - A instead of 1 - A to avoid division by zero
         cost = -1 / m * np.sum(
             Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A)
         )
-        
+
         return cost
 
     def evaluate(self, X, Y):
@@ -99,13 +99,13 @@ class Neuron:
         """
         # Get the activated output using forward propagation
         A = self.forward_prop(X)
-        
+
         # Convert activations to predictions (1 if >= 0.5, 0 otherwise)
         prediction = np.where(A >= 0.5, 1, 0)
-        
+
         # Calculate the cost
         cost = self.cost(Y, A)
-        
+
         return prediction, cost
 
     def gradient_descent(self, X, Y, A, alpha=0.05):
@@ -124,14 +124,14 @@ class Neuron:
         """
         # Number of examples
         m = X.shape[1]
-        
+
         # Calculate dZ (derivative of cost with respect to Z)
         dZ = A - Y
-        
+
         # Calculate gradients
         dW = (1 / m) * np.matmul(dZ, X.T)
         db = (1 / m) * np.sum(dZ)
-        
+
         # Update weights and bias
         self.__W = self.__W - alpha * dW
         self.__b = self.__b - alpha * db

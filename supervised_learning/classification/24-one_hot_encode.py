@@ -17,13 +17,13 @@ def one_hot_encode(Y, classes):
     try:
         # Get number of examples
         m = Y.shape[0]
-        
+
         # Create zero matrix
         one_hot = np.zeros((classes, m))
-        
+
         # Set appropriate positions to 1
         one_hot[Y, np.arange(m)] = 1
-        
+
         return one_hot
     except Exception:
         return None

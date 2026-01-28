@@ -56,10 +56,10 @@ class Neuron:
         """
         # Calculate linear combination: z = W·X + b
         z = np.matmul(self.__W, X) + self.__b
-        
+
         # Apply sigmoid activation function: A = 1 / (1 + e^(-z))
         self.__A = 1 / (1 + np.exp(-z))
-        
+
         return self.__A
 
     def cost(self, Y, A):
@@ -75,14 +75,14 @@ class Neuron:
         """
         # Number of examples
         m = Y.shape[1]
-        
+
         # Logistic regression cost function
         # Cost = -1/m * Σ[Y*log(A) + (1-Y)*log(1-A)]
         # Using 1.0000001 - A instead of 1 - A to avoid division by zero
         cost = -1 / m * np.sum(
             Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A)
         )
-        
+
         return cost
 
     def evaluate(self, X, Y):
@@ -100,13 +100,13 @@ class Neuron:
         """
         # Get the activated output using forward propagation
         A = self.forward_prop(X)
-        
+
         # Convert activations to predictions (1 if >= 0.5, 0 otherwise)
         prediction = np.where(A >= 0.5, 1, 0)
-        
+
         # Calculate the cost
         cost = self.cost(Y, A)
-        
+
         return prediction, cost
 
     def gradient_descent(self, X, Y, A, alpha=0.05):
@@ -125,14 +125,14 @@ class Neuron:
         """
         # Number of examples
         m = X.shape[1]
-        
+
         # Calculate dZ (derivative of cost with respect to Z)
         dZ = A - Y
-        
+
         # Calculate gradients
         dW = (1 / m) * np.matmul(dZ, X.T)
         db = (1 / m) * np.sum(dZ)
-        
+
         # Update weights and bias
         self.__W = self.__W - alpha * dW
         self.__b = self.__b - alpha * db
@@ -169,44 +169,44 @@ class Neuron:
             raise TypeError("iterations must be an integer")
         if iterations <= 0:
             raise ValueError("iterations must be a positive integer")
-        
+
         # Validate alpha
         if not isinstance(alpha, float):
             raise TypeError("alpha must be a float")
         if alpha <= 0:
             raise ValueError("alpha must be positive")
-        
+
         # Validate step only if verbose or graph is True
         if verbose or graph:
             if not isinstance(step, int):
                 raise TypeError("step must be an integer")
             if step <= 0 or step > iterations:
                 raise ValueError("step must be positive and <= iterations")
-        
+
         # Lists to store costs and iterations for plotting
         costs = []
         iteration_list = []
-        
+
         # Training loop
         for i in range(iterations + 1):
             # Forward propagation
             A = self.forward_prop(X)
-            
+
             # Print and/or record cost at step intervals and at 0 and last
             if i == 0 or i == iterations or i % step == 0:
                 cost = self.cost(Y, A)
-                
+
                 if verbose:
                     print("Cost after {} iterations: {}".format(i, cost))
-                
+
                 if graph:
                     costs.append(cost)
                     iteration_list.append(i)
-            
+
             # Perform gradient descent (except after last iteration)
             if i < iterations:
                 self.gradient_descent(X, Y, A, alpha)
-        
+
         # Plot the graph if requested
         if graph:
             plt.plot(iteration_list, costs, 'b-')
@@ -214,6 +214,6 @@ class Neuron:
             plt.ylabel('cost')
             plt.title('Training Cost')
             plt.show()
-        
+
         # Return evaluation after training
         return self.evaluate(X, Y)

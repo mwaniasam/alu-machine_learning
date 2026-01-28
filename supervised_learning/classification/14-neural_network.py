@@ -25,18 +25,18 @@ class NeuralNetwork:
             raise TypeError("nx must be an integer")
         if nx < 1:
             raise ValueError("nx must be a positive integer")
-        
+
         # Validate nodes
         if not isinstance(nodes, int):
             raise TypeError("nodes must be an integer")
         if nodes < 1:
             raise ValueError("nodes must be a positive integer")
-        
+
         # Initialize private weights and biases for hidden layer
         self.__W1 = np.random.randn(nodes, nx)
         self.__b1 = np.zeros((nodes, 1))
         self.__A1 = 0
-        
+
         # Initialize private weights and biases for output layer
         self.__W2 = np.random.randn(1, nodes)
         self.__b2 = 0
@@ -87,17 +87,17 @@ class NeuralNetwork:
         # Calculate hidden layer
         # Z1 = W1 · X + b1
         Z1 = np.matmul(self.__W1, X) + self.__b1
-        
+
         # Apply sigmoid activation: A1 = 1 / (1 + e^(-Z1))
         self.__A1 = 1 / (1 + np.exp(-Z1))
-        
+
         # Calculate output layer
         # Z2 = W2 · A1 + b2
         Z2 = np.matmul(self.__W2, self.__A1) + self.__b2
-        
+
         # Apply sigmoid activation: A2 = 1 / (1 + e^(-Z2))
         self.__A2 = 1 / (1 + np.exp(-Z2))
-        
+
         return self.__A1, self.__A2
 
     def cost(self, Y, A):
@@ -113,14 +113,14 @@ class NeuralNetwork:
         """
         # Number of examples
         m = Y.shape[1]
-        
+
         # Logistic regression cost function
         # Cost = -1/m * Σ[Y*log(A) + (1-Y)*log(1-A)]
         # Using 1.0000001 - A instead of 1 - A to avoid division by zero
         cost = -1 / m * np.sum(
             Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A)
         )
-        
+
         return cost
 
     def evaluate(self, X, Y):
@@ -138,13 +138,13 @@ class NeuralNetwork:
         """
         # Get the activated outputs using forward propagation
         _, A2 = self.forward_prop(X)
-        
+
         # Convert activations to predictions (1 if >= 0.5, 0 otherwise)
         prediction = np.where(A2 >= 0.5, 1, 0)
-        
+
         # Calculate the cost
         cost = self.cost(Y, A2)
-        
+
         return prediction, cost
 
     def gradient_descent(self, X, Y, A1, A2, alpha=0.05):
@@ -164,18 +164,18 @@ class NeuralNetwork:
         """
         # Number of examples
         m = X.shape[1]
-        
+
         # Backpropagation for output layer
         dZ2 = A2 - Y
         dW2 = (1 / m) * np.matmul(dZ2, A1.T)
         db2 = (1 / m) * np.sum(dZ2, axis=1, keepdims=True)
-        
+
         # Backpropagation for hidden layer
         # dZ1 = W2.T * dZ2 * A1 * (1 - A1)  (sigmoid derivative)
         dZ1 = np.matmul(self.__W2.T, dZ2) * A1 * (1 - A1)
         dW1 = (1 / m) * np.matmul(dZ1, X.T)
         db1 = (1 / m) * np.sum(dZ1, axis=1, keepdims=True)
-        
+
         # Update weights and biases
         self.__W2 = self.__W2 - alpha * dW2
         self.__b2 = self.__b2 - alpha * db2
@@ -208,20 +208,20 @@ class NeuralNetwork:
             raise TypeError("iterations must be an integer")
         if iterations <= 0:
             raise ValueError("iterations must be a positive integer")
-        
+
         # Validate alpha
         if not isinstance(alpha, float):
             raise TypeError("alpha must be a float")
         if alpha <= 0:
             raise ValueError("alpha must be positive")
-        
+
         # Training loop
         for i in range(iterations):
             # Forward propagation
             A1, A2 = self.forward_prop(X)
-            
+
             # Gradient descent
             self.gradient_descent(X, Y, A1, A2, alpha)
-        
+
         # Return evaluation after training
         return self.evaluate(X, Y)

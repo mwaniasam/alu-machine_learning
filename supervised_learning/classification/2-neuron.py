@@ -55,8 +55,8 @@ class Neuron:
         """
         # Calculate linear combination: z = W·X + b
         z = np.matmul(self.__W, X) + self.__b
-        
+
         # Apply sigmoid activation function: A = 1 / (1 + e^(-z))
         self.__A = 1 / (1 + np.exp(-z))
-        
+
         return self.__A
