@@ -8,7 +8,7 @@ if __name__ == '__main__':
     response = requests.get(url)
     launches = response.json()
 
-    upcoming = sorted(launches, key=lambda x: x['date_unix'])[0]
+    upcoming = min(launches, key=lambda x: x['date_unix'])
 
     name = upcoming['name']
     date = upcoming['date_local']
