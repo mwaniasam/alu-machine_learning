@@ -22,3 +22,4 @@ def sentientPlanets():
         url = data['next']
 
     return planets
+
