@@ -4,9 +4,19 @@ import requests
 
 
 if __name__ == '__main__':
-    url = 'https://api.spacexdata.com/v5/launches/upcoming'
+    url = 'https://api.spacexdata.com/v4/launches/upcoming'
+
     response = requests.get(url)
     launches = response.json()
+
+    if not launches:
+        url = 'https://api.spacexdata.com/v4/launches/query'
+        payload = {
+            "query": {"upcoming": True},
+            "options": {"sort": {"date_unix": "asc"}, "limit": 1}
+        }
+        response = requests.post(url, json=payload)
+        launches = response.json().get('docs', [])
 
     upcoming = min(launches, key=lambda x: x['date_unix'])
 
