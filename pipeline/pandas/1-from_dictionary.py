@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Module for creating a pd.DataFrame from a np.ndarray"""
+"""Module for creating a pd.DataFrame from a dictionary"""
 import pandas as pd
 
-
-def from_numpy(array):
-    """Creates a pd.DataFrame from a np.ndarray with alphabetical column labels"""
-    cols = [chr(65 + i) for i in range(array.shape[1])]
-    return pd.DataFrame(array, columns=cols)
+df = pd.DataFrame(
+    {'First': [0.0, 0.5, 1.0, 1.5], 'Second': ['one', 'two', 'three', 'four']},
+    index=['A', 'B', 'C', 'D']
+)
