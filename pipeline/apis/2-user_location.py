@@ -3,6 +3,7 @@
 import requests
 import sys
 import time
+import math
 
 
 if __name__ == '__main__':
@@ -13,8 +14,14 @@ if __name__ == '__main__':
         print('Not found')
     elif response.status_code == 403:
         reset_time = int(response.headers['X-Ratelimit-Reset'])
-        minutes = (reset_time - int(time.time())) // 60
+        minutes = math.ceil((reset_time - int(time.time())) / 60)
         print('Reset in {} min'.format(minutes))
-    else:
+    elif response.status_code == 200:
         data = response.json()
-        print(data.get('location'))
+        location = data.get('location')
+        if location:
+            print(location)
+        else:
+            print('Not found')
+    else:
+        print('Not found')
