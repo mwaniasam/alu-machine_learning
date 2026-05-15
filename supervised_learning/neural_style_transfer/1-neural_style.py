@@ -81,28 +81,38 @@ class NST:
         The model outputs style layer outputs followed by content layer output.
         Saves the model in the instance attribute model.
         """
-        vgg19 = tf.keras.applications.VGG19(
+        vgg19 = tf.keras.applications.vgg19.VGG19(
             include_top=False, weights='imagenet')
         vgg19.trainable = False
 
-        inputs = tf.keras.Input(shape=(None, None, 3))
-        x = inputs
+        # Build new sequential-style model replacing MaxPool with AvgPool
+        model_input = tf.keras.Input(shape=(None, None, 3))
+        x = model_input
+
         for layer in vgg19.layers[1:]:
             if isinstance(layer, tf.keras.layers.MaxPooling2D):
+                # Create a brand new AveragePooling2D layer
                 x = tf.keras.layers.AveragePooling2D(
                     pool_size=layer.pool_size,
                     strides=layer.strides,
                     padding=layer.padding,
-                    name=layer.name)(x)
+                    name=layer.name
+                )(x)
             else:
-                layer.trainable = False
-                x = layer(x)
+                # Clone the layer config and create a new layer with weights
+                layer_config = layer.get_config()
+                new_layer = layer.__class__.from_config(layer_config)
+                x = new_layer(x)
+                new_layer.set_weights(layer.get_weights())
+                new_layer.trainable = False
 
-        new_model = tf.keras.Model(inputs=inputs, outputs=x)
+        # Build intermediate model to extract named layer outputs
+        full_model = tf.keras.Model(inputs=model_input, outputs=x)
 
+        # Collect style and content layer outputs
         outputs = []
         for name in self.style_layers:
-            outputs.append(new_model.get_layer(name).output)
-        outputs.append(new_model.get_layer(self.content_layer).output)
+            outputs.append(full_model.get_layer(name).output)
+        outputs.append(full_model.get_layer(self.content_layer).output)
 
-        self.model = tf.keras.Model(inputs=inputs, outputs=outputs)
+        self.model = tf.keras.Model(inputs=model_input, outputs=outputs)
