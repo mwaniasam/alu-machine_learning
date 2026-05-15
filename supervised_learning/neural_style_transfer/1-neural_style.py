@@ -21,17 +21,26 @@ class NST:
             alpha: float - weight for content cost
             beta: float - weight for style cost
         """
-        if (not isinstance(style_image, np.ndarray) or
-                style_image.ndim != 3 or style_image.shape[2] != 3):
+        if type(style_image) is not np.ndarray or \
+                len(style_image.shape) != 3:
             raise TypeError(
                 "style_image must be a numpy.ndarray with shape (h, w, 3)")
-        if (not isinstance(content_image, np.ndarray) or
-                content_image.ndim != 3 or content_image.shape[2] != 3):
+        if type(content_image) is not np.ndarray or \
+                len(content_image.shape) != 3:
             raise TypeError(
                 "content_image must be a numpy.ndarray with shape (h, w, 3)")
-        if not isinstance(alpha, (int, float)) or alpha < 0:
+        style_h, style_w, style_c = style_image.shape
+        content_h, content_w, content_c = content_image.shape
+        if style_h <= 0 or style_w <= 0 or style_c != 3:
+            raise TypeError(
+                "style_image must be a numpy.ndarray with shape (h, w, 3)")
+        if content_h <= 0 or content_w <= 0 or content_c != 3:
+            raise TypeError(
+                "content_image must be a numpy.ndarray with shape (h, w, 3)")
+        if (type(alpha) is not float and type(alpha) is not int) \
+                or alpha < 0:
             raise TypeError("alpha must be a non-negative number")
-        if not isinstance(beta, (int, float)) or beta < 0:
+        if (type(beta) is not float and type(beta) is not int) or beta < 0:
             raise TypeError("beta must be a non-negative number")
 
         tf.enable_eager_execution()
@@ -54,65 +63,50 @@ class NST:
         Returns:
             tf.Tensor of shape (1, h_new, w_new, 3) - scaled image
         """
-        if (not isinstance(image, np.ndarray) or
-                image.ndim != 3 or image.shape[2] != 3):
+        if type(image) is not np.ndarray or len(image.shape) != 3:
             raise TypeError(
                 "image must be a numpy.ndarray with shape (h, w, 3)")
-
-        h, w = image.shape[:2]
+        h, w, c = image.shape
+        if h <= 0 or w <= 0 or c != 3:
+            raise TypeError(
+                "image must be a numpy.ndarray with shape (h, w, 3)")
         if h > w:
-            new_h = 512
-            new_w = int(w * 512 / h)
+            h_new = 512
+            w_new = int(w * (512 / h))
         else:
-            new_w = 512
-            new_h = int(h * 512 / w)
+            w_new = 512
+            h_new = int(h * (512 / w))
 
-        image = np.expand_dims(image, axis=0)
-        scaled = tf.image.resize_bicubic(image, [new_h, new_w])
-        scaled = scaled / 255.0
-        scaled = tf.clip_by_value(scaled, 0, 1)
+        resized = tf.image.resize_bicubic(
+            np.expand_dims(image, axis=0), size=(h_new, w_new))
+        rescaled = resized / 255
+        rescaled = tf.clip_by_value(rescaled, 0, 1)
 
-        return scaled
+        return rescaled
 
     def load_model(self):
         """
-        Creates the model used to calculate cost using VGG19 as base.
-        MaxPooling layers are replaced with AveragePooling layers.
-        The model outputs style layer outputs followed by content layer output.
+        Creates the model used to calculate cost using VGG19 as a base.
+        Saves and reloads VGG19 replacing MaxPooling with AveragePooling.
         Saves the model in the instance attribute model.
         """
-        vgg19 = tf.keras.applications.vgg19.VGG19(
+        vgg19 = tf.keras.applications.VGG19(
             include_top=False, weights='imagenet')
-        vgg19.trainable = False
+        vgg19.save('VGG19_base_model')
 
-        # Build new sequential-style model replacing MaxPool with AvgPool
-        model_input = tf.keras.Input(shape=(None, None, 3))
-        x = model_input
+        custom_objects = {'MaxPooling2D': tf.keras.layers.AveragePooling2D}
+        vgg = tf.keras.models.load_model(
+            'VGG19_base_model', custom_objects=custom_objects)
 
-        for layer in vgg19.layers[1:]:
-            if isinstance(layer, tf.keras.layers.MaxPooling2D):
-                # Create a brand new AveragePooling2D layer
-                x = tf.keras.layers.AveragePooling2D(
-                    pool_size=layer.pool_size,
-                    strides=layer.strides,
-                    padding=layer.padding,
-                    name=layer.name
-                )(x)
-            else:
-                # Clone the layer config and create a new layer with weights
-                layer_config = layer.get_config()
-                new_layer = layer.__class__.from_config(layer_config)
-                x = new_layer(x)
-                new_layer.set_weights(layer.get_weights())
-                new_layer.trainable = False
+        style_outputs = []
+        content_output = None
 
-        # Build intermediate model to extract named layer outputs
-        full_model = tf.keras.Model(inputs=model_input, outputs=x)
+        for layer in vgg.layers:
+            layer.trainable = False
+            if layer.name in self.style_layers:
+                style_outputs.append(layer.output)
+            if layer.name in self.content_layer:
+                content_output = layer.output
 
-        # Collect style and content layer outputs
-        outputs = []
-        for name in self.style_layers:
-            outputs.append(full_model.get_layer(name).output)
-        outputs.append(full_model.get_layer(self.content_layer).output)
-
-        self.model = tf.keras.Model(inputs=model_input, outputs=outputs)
+        outputs = style_outputs + [content_output]
+        self.model = tf.keras.models.Model(vgg.input, outputs)
