@@ -82,12 +82,12 @@ class NST:
         The model outputs style layer outputs followed by content layer output.
         Saves the model in the instance attribute model.
         """
-        vgg19 = tf.keras.applications.VGG19(
+        vgg19 = tf.keras.applications.vgg19.VGG19(
             include_top=False, weights='imagenet')
         vgg19.trainable = False
 
-        inputs = tf.keras.Input(shape=(None, None, 3))
-        x = inputs
+        # Rebuild graph with AveragePooling replacing MaxPooling
+        x = vgg19.input
         for layer in vgg19.layers[1:]:
             if isinstance(layer, tf.keras.layers.MaxPooling2D):
                 x = tf.keras.layers.AveragePooling2D(
@@ -96,17 +96,18 @@ class NST:
                     padding=layer.padding,
                     name=layer.name)(x)
             else:
-                layer.trainable = False
                 x = layer(x)
 
-        new_model = tf.keras.Model(inputs=inputs, outputs=x)
+        # Build a model that outputs everything up to the last needed layer
+        full_model = tf.keras.models.Model(inputs=vgg19.input, outputs=x)
 
         outputs = []
         for name in self.style_layers:
-            outputs.append(new_model.get_layer(name).output)
-        outputs.append(new_model.get_layer(self.content_layer).output)
+            outputs.append(full_model.get_layer(name).output)
+        outputs.append(full_model.get_layer(self.content_layer).output)
 
-        self.model = tf.keras.Model(inputs=inputs, outputs=outputs)
+        self.model = tf.keras.models.Model(
+            inputs=vgg19.input, outputs=outputs)
 
     @staticmethod
     def gram_matrix(input_layer):
