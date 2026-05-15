@@ -77,14 +77,15 @@ class NST:
     def load_model(self):
         """
         Creates the model used to calculate cost using VGG19 as base.
+        MaxPooling layers are replaced with AveragePooling layers.
         The model outputs style layer outputs followed by content layer output.
         Saves the model in the instance attribute model.
         """
-        vgg19 = tf.keras.applications.vgg19.VGG19(
+        vgg19 = tf.keras.applications.VGG19(
             include_top=False, weights='imagenet')
         vgg19.trainable = False
 
-        inputs = vgg19.input
+        inputs = tf.keras.Input(shape=(None, None, 3))
         x = inputs
         for layer in vgg19.layers[1:]:
             if isinstance(layer, tf.keras.layers.MaxPooling2D):
@@ -92,19 +93,19 @@ class NST:
                     pool_size=layer.pool_size,
                     strides=layer.strides,
                     padding=layer.padding,
-                    name=layer.name
-                )(x)
+                    name=layer.name)(x)
             else:
+                layer.trainable = False
                 x = layer(x)
 
-        model = tf.keras.models.Model(inputs=inputs, outputs=x)
+        new_model = tf.keras.Model(inputs=inputs, outputs=x)
 
         outputs = []
-        for layer_name in self.style_layers:
-            outputs.append(model.get_layer(layer_name).output)
-        outputs.append(model.get_layer(self.content_layer).output)
+        for name in self.style_layers:
+            outputs.append(new_model.get_layer(name).output)
+        outputs.append(new_model.get_layer(self.content_layer).output)
 
-        self.model = tf.keras.models.Model(inputs=inputs, outputs=outputs)
+        self.model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
     @staticmethod
     def gram_matrix(input_layer):
@@ -122,13 +123,9 @@ class NST:
         if len(input_layer.shape) != 4:
             raise TypeError("input_layer must be a tensor of rank 4")
 
-        # shape: (1, h, w, c)
         _, h, w, c = input_layer.shape
-        # Reshape to (1, h*w, c)
         F = tf.reshape(input_layer, (1, -1, c))
-        # Gram matrix: (1, c, c)
         gram = tf.matmul(F, F, transpose_a=True)
-        # Normalize by h*w
         gram = gram / tf.cast(h * w, tf.float32)
 
         return gram
