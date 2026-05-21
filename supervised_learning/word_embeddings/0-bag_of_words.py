@@ -20,16 +20,16 @@ def bag_of_words(sentences, vocab=None):
     """
     cleaned_sentences = []
 
-    # Preprocess sentences: convert to lowercase and strip all punctuation
     for sentence in sentences:
         words = []
-        # Replace punctuation marks/apostrophes with space or strip them completely
-        # Replacing common punctuation and apostrophes with spaces handles "'s"
-        cleaned_text = sentence.lower()
-        for char in ".,!?::;\n'\"":
-            cleaned_text = cleaned_text.replace(char, " ")
+        # Convert to lowercase and handle possessive 's structural noise
+        modified_text = sentence.lower().replace("'s", "")
 
-        for word in cleaned_text.split():
+        # Clean off remaining structural punctuation marks safely
+        for char in ".,!?::;\n\"":
+            modified_text = modified_text.replace(char, " ")
+
+        for word in modified_text.split():
             words.append(word)
         cleaned_sentences.append(words)
 
