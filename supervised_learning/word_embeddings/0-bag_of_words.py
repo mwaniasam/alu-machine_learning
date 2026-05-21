@@ -20,18 +20,20 @@ def bag_of_words(sentences, vocab=None):
     """
     cleaned_sentences = []
 
-    # Step 1: Preprocess sentences - lowercase and handle trailing punctuation
+    # Preprocess sentences: convert to lowercase and strip all punctuation
     for sentence in sentences:
         words = []
-        for word in sentence.lower().split():
-            # Strip trailing punctuation marks but keep internal apostrophes
-            while word and word[-1] in ".!?,;:":
-                word = word[:-1]
-            if word:
-                words.append(word)
+        # Replace punctuation marks/apostrophes with space or strip them completely
+        # Replacing common punctuation and apostrophes with spaces handles "'s"
+        cleaned_text = sentence.lower()
+        for char in ".,!?::;\n'\"":
+            cleaned_text = cleaned_text.replace(char, " ")
+
+        for word in cleaned_text.split():
+            words.append(word)
         cleaned_sentences.append(words)
 
-    # Step 2: Build or extract feature vocabulary
+    # Build or extract feature vocabulary
     if vocab is None:
         unique_words = set()
         for words in cleaned_sentences:
@@ -40,7 +42,7 @@ def bag_of_words(sentences, vocab=None):
     else:
         features = vocab
 
-    # Step 3: Populate the occurrence matrix
+    # Populate the occurrence matrix
     s = len(sentences)
     f = len(features)
     embeddings = np.zeros((s, f), dtype=int)
