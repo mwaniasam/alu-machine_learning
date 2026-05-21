@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Module containing the tf_idf function.
+Module containing the tf_idf function matching TfidfVectorizer specs.
 """
 import numpy as np
 
 
 def tf_idf(sentences, vocab=None):
     """
-    Creates a TF-IDF embedding matrix with L2 normalization.
+    Creates a TF-IDF embedding matrix using smooth IDF and L2 normalization.
 
     Parameters:
     sentences (list): A list of sentences to analyze.
@@ -20,7 +20,7 @@ def tf_idf(sentences, vocab=None):
     """
     cleaned_sentences = []
 
-    # Preprocess text identical to Task 0
+    # Clean text exactly identical to Task 0
     for sentence in sentences:
         modified_text = sentence.lower().replace("'s", "")
         for char in ".,!?::;\n\"":
@@ -39,7 +39,7 @@ def tf_idf(sentences, vocab=None):
     s = len(sentences)
     f = len(features)
 
-    # Step 1: Compute Term Frequency (TF) -> raw count of term in document
+    # Step 1: Compute raw Term Frequency (TF) matrix
     tf = np.zeros((s, f))
     feature_indices = {word: i for i, word in enumerate(features)}
 
@@ -49,27 +49,20 @@ def tf_idf(sentences, vocab=None):
                 col_idx = feature_indices[word]
                 tf[row_idx, col_idx] += 1
 
-    # Step 2: Compute Inverse Document Frequency (IDF)
-    # Number of documents containing each specific term
-    doc_counts = np.sum(tf > 0, axis=0)
+    # Step 2: Compute Document Frequency (DF)
+    df = np.sum(tf > 0, axis=0)
 
-    # Use log(Total Documents / Documents with Term) matching standard setups
-    # To protect against division by zero for terms not in corpus, cap doc count
-    idf = np.zeros(f)
-    for i in range(f):
-        if doc_counts[i] > 0:
-            idf[i] = np.log(s / doc_counts[i])
-        else:
-            idf[i] = 0.0
+    # Step 3: Compute smooth IDF matching scikit-learn equation:
+    # idf = ln((1 + s) / (1 + df)) + 1
+    idf = np.log((1 + s) / (1 + df)) + 1
 
-    # Step 3: Compute raw TF-IDF matrix
+    # Step 4: Multiply TF by IDF
     embeddings = tf * idf
 
-    # Step 4: Apply L2 (Euclidean) row-normalization
-    # Sum of squares along each row axis
+    # Step 5: Apply L2 row-normalization
     norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
 
-    # Divide by norm where norm is greater than zero to avoid NaN values
+    # Safe division avoiding zeros
     embeddings = np.divide(embeddings, norms, out=embeddings,
                            where=norms > 0)
 
