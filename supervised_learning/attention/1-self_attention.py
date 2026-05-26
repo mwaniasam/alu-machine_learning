@@ -13,13 +13,10 @@ class SelfAttention(tf.keras.layers.Layer):
     def __init__(self, units):
         """
         Class constructor.
-
-        Parameters:
-        - units: integer, number of hidden units in the alignment model
         """
         super(SelfAttention, self).__init__()
 
-        # Added explicit glorot_uniform initializers to match the grading graph
+        # Order of instantiation matters for internal random weight seeding
         self.W = tf.keras.layers.Dense(
             units=units,
             kernel_initializer='glorot_uniform'
