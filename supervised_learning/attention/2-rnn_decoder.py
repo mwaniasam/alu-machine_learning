@@ -14,25 +14,16 @@ class RNNDecoder(tf.keras.layers.Layer):
     def __init__(self, vocab, embedding, units, batch):
         """
         Class constructor to initialize the decoder layer.
-
-        Parameters:
-        - vocab: integer, size of the output vocabulary
-        - embedding: integer, dimensionality of the embedding vector
-        - units: integer, number of hidden units in the RNN cell
-        - batch: integer, the batch size
         """
         super(RNNDecoder, self).__init__()
 
-        # Initialize the attention layer
         self.attention = SelfAttention(units)
 
-        # Keras Embedding layer for target vocabulary
         self.embedding = tf.keras.layers.Embedding(
             input_dim=vocab,
             output_dim=embedding
         )
 
-        # Keras GRU layer
         self.gru = tf.keras.layers.GRU(
             units=units,
             return_sequences=True,
@@ -40,8 +31,6 @@ class RNNDecoder(tf.keras.layers.Layer):
             recurrent_initializer='glorot_uniform'
         )
 
-        # Keras Fully Connected (Dense) layer to output vocabulary scores
-        # Explicitly setting glorot_uniform matches the grading graph structure
         self.F = tf.keras.layers.Dense(
             units=vocab,
             kernel_initializer='glorot_uniform'
@@ -50,18 +39,8 @@ class RNNDecoder(tf.keras.layers.Layer):
     def call(self, x, s_prev, hidden_states):
         """
         Decodes a single time step using attention and a GRU cell.
-
-        Parameters:
-        - x: tensor of shape (batch, 1) containing the previous word index
-        - s_prev: tensor of shape (batch, units) containing previous hidden state
-        - hidden_states: tensor of shape (batch, input_seq_len, units)
-                         containing the outputs of the encoder
-
-        Returns:
-        - y: tensor of shape (batch, vocab) containing the output word scores
-        - s: tensor of shape (batch, units) containing the new hidden state
         """
-        # 1. Calculate the context vector using the attention mechanism
+        # 1. Calculate the context vector using attention
         context, _ = self.attention(s_prev, hidden_states)
 
         # 2. Pass the input token through the embedding layer
