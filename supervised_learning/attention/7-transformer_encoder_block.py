@@ -3,7 +3,9 @@
 Module defining a Transformer Encoder Block using TensorFlow.
 """
 import tensorflow as tf
-MultiHeadAttention = __import__('6-multihead_attention').MultiHeadAttention
+MultiHeadAttention = __import__(
+    '6-multihead_attention'
+).MultiHeadAttention
 
 
 class EncoderBlock(tf.keras.layers.Layer):
@@ -18,7 +20,7 @@ class EncoderBlock(tf.keras.layers.Layer):
         Parameters:
         - dm: integer, the dimensionality of the model
         - h: integer, the number of heads
-        - hidden: integer, number of hidden units in the fully connected layer
+        - hidden: integer, number of hidden units in the dense layer
         - drop_rate: float, the dropout rate
         """
         super(EncoderBlock, self).__init__()
@@ -40,8 +42,12 @@ class EncoderBlock(tf.keras.layers.Layer):
         )
 
         # Layer Normalization layers with exact epsilon requirement
-        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
-        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm1 = tf.keras.layers.LayerNormalization(
+            epsilon=1e-6
+        )
+        self.layernorm2 = tf.keras.layers.LayerNormalization(
+            epsilon=1e-6
+        )
 
         # Dropout layers
         self.dropout1 = tf.keras.layers.Dropout(rate=drop_rate)
@@ -49,26 +55,25 @@ class EncoderBlock(tf.keras.layers.Layer):
 
     def call(self, x, training, mask=None):
         """
-        Processes input through multi-head attention and feed-forward networks
-        with residual connections and layer normalization.
-
-        Parameters:
-        - x: tensor of shape (batch, input_seq_len, dm) containing the input
-        - training: boolean to determine if the model is training
-        - mask: the mask to be applied for multi-head attention
-
-        Returns:
-        - A tensor of shape (batch, input_seq_len, dm) containing the output
+        Processes input through multi-head attention and
+        feed-forward networks with residual connections
+        and layer normalization.
         """
-        # 1. First Sub-Layer: Multi-Head Attention + Dropout + Residual Connection
+        # First Sub-Layer: MHA + Dropout + Residual
         attn_output, _ = self.mha(x, x, x, mask)
-        attn_output = self.dropout1(attn_output, training=training)
+        attn_output = self.dropout1(
+            attn_output,
+            training=training
+        )
         out1 = self.layernorm1(x + attn_output)
 
-        # 2. Second Sub-Layer: Position-wise Feed-Forward Network
+        # Second Sub-Layer: Position-wise FFN
         ffn_output = self.dense_hidden(out1)
         ffn_output = self.dense_output(ffn_output)
-        ffn_output = self.dropout2(ffn_output, training=training)
+        ffn_output = self.dropout2(
+            ffn_output,
+            training=training
+        )
 
         # Residual Connection + Layer Normalization
         out2 = self.layernorm2(out1 + ffn_output)
