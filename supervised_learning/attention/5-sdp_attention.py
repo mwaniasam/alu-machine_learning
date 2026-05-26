@@ -23,10 +23,10 @@ def sdp_attention(Q, K, V, mask=None):
                shape (..., seq_len_q, seq_len_v)
     """
     # Get the dimension of the keys dk (the last dimension of Q or K)
-    # Cast it to float32 to execute division safely inside the graph
     dk = tf.cast(tf.shape(K)[-1], tf.float32)
 
-    # Multiply Q by transposed K: (..., seq_len_q, dk) x (..., dk, seq_len_v)
+    # Multiply Q by transposed K
+    # Q: (..., seq_len_q, dk) x K_T: (..., dk, seq_len_v)
     # Resulting shape: (..., seq_len_q, seq_len_v)
     matmul_qk = tf.matmul(Q, K, transpose_b=True)
 
@@ -37,11 +37,12 @@ def sdp_attention(Q, K, V, mask=None):
     if mask is not None:
         scaled_attention_logits += (mask * -1e9)
 
-    # Apply softmax along the last axis to get probabilities (attention weights)
+    # Apply softmax along the last axis to get probabilities (weights)
     # Shape: (..., seq_len_q, seq_len_v)
     weights = tf.nn.softmax(scaled_attention_logits, axis=-1)
 
-    # Multiply weights by V: (..., seq_len_q, seq_len_v) x (..., seq_len_v, dv)
+    # Multiply weights by V
+    # weights: (..., seq_len_q, seq_len_v) x V: (..., seq_len_v, dv)
     # Resulting output shape: (..., seq_len_q, dv)
     output = tf.matmul(weights, V)
 
