@@ -36,7 +36,8 @@ def sarsa_lambtha(env, Q, lambtha, episodes=5000, max_steps=100, alpha=0.1,
             if done:
                 delta = reward - Q[state, action]
             else:
-                delta = reward + gamma * Q[next_state, next_action] - Q[state, action]
+                delta = reward + gamma * Q[next_state, next_action] - \
+                    Q[state, action]
 
             E[state, action] += 1.0
             Q = Q + alpha * delta * E
