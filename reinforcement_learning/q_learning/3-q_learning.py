@@ -13,7 +13,7 @@ def train(env, Q, episodes=5000, max_steps=100, alpha=0.1, gamma=0.99,
     """
     total_rewards = []
     initial_epsilon = epsilon
-    
+
     for ep in range(episodes):
         state = env.reset()
         episode_reward = 0
