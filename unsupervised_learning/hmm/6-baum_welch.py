@@ -43,8 +43,8 @@ def baum_welch(Observations, Transition, Emission, Initial, iterations=1000):
         # Xi and Gamma
         xi = np.zeros((M, M, T - 1))
         for t in range(T - 1):
-            term = np.matmul(Transition,
-                                 Emission[:, Observations[t + 1]] * B[:, t + 1])
+            term = Emission[:, Observations[t + 1]] * B[:, t + 1]
+            term = np.matmul(Transition, term)
             denominator = np.sum(F[:, t] * term)
             if denominator == 0:
                 return None, None
