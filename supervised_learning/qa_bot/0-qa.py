@@ -31,7 +31,7 @@ def question_answer(question, reference):
         (input_word_ids, input_mask, input_type_ids))
 
     outputs = model([input_word_ids, input_mask, input_type_ids])
-    
+
     # TF Hub model outputs a list of 2 tensors (start_logits, end_logits)
     short_start = tf.argmax(outputs[0][0][1:]) + 1
     short_end = tf.argmax(outputs[1][0][1:]) + 1
