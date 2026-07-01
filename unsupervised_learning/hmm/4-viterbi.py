@@ -7,7 +7,8 @@ import numpy as np
 
 def viterbi(Observation, Emission, Transition, Initial):
     """
-    Calculates the most likely sequence of hidden states for a hidden markov model
+    Calculates the most likely sequence of hidden states
+    for a hidden markov model
     """
     if not isinstance(Observation, np.ndarray) or len(Observation.shape) != 1:
         return None, None
