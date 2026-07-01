@@ -9,9 +9,6 @@ def pca(X, var=0.95):
     """
     Performs PCA on a dataset
     """
-    if not isinstance(X, np.ndarray) or len(X.shape) != 2:
-        return None
-
     U, S, Vh = np.linalg.svd(X)
     cum_var = np.cumsum(S) / np.sum(S)
 
